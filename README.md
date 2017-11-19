@@ -11,41 +11,35 @@ Following task can be performed:
 
 1) Generate keys
 
-$ python2 ECIES.py genkey mykeys.json
+        $ python2 ECIES.py genkey mykeys.json
 
-This will generate a private and public key-pair, using elliptic curves and save them as a json file.
+    This will generate a private and public key-pair, using elliptic curves and save them as a json file.
 
 2) encryption
 
-$ python2 ECIES.py encrypt fileToEncrypt.txt  encryptedResult.txt peerkeys.json ownKeys.json
+        $ python2 ECIES.py encrypt fileToEncrypt.txt  encryptedResult.txt peerkeys.json ownKeys.json
 
-This command will encrypt a given text file using peer public key and own private key 
+    This command will encrypt a given text file using peer public key and own private key 
 
 3) decryption
 
-$ python2 ECIES.py decrypt fileToDecrypt.txt  decryptedResult.txt ownKeys.json
+         $ python2 ECIES.py decrypt fileToDecrypt.txt  decryptedResult.txt ownKeys.json
 
-This command will decrypt a file using own private key and extract peer public key from encrypted file
+    This command will decrypt a file using own private key and extract peer public key from encrypted file
 
 
 Test run: 
 
-1: generate two keys-pairs. one for Alice and one for Bob
+  1: generate two keys-pairs. one for Alice and one for Bob
 
-$ python2 ECIES.py genkey AliceKeys.json
+        $ python2 ECIES.py genkey AliceKeys.json
 
-$ python2 ECIES.py genkey BobKeys.json
+        $ python2 ECIES.py genkey BobKeys.json
 
-2: Encrypt a file using Bob's public key. Only bob will be able to Decrypt it (Alice encrypt a mssage to bob).
+  2: Encrypt a file using Bob's public key. Only bob will be able to Decrypt it (Alice encrypt a mssage to bob).
 
-$ python2 ECIES.py encrypt fileToEncrypt.txt  encryptedResult.txt BobKeys.json AliceKeys.json
+        $ python2 ECIES.py encrypt fileToEncrypt.txt  encryptedResult.txt BobKeys.json AliceKeys.json
 
+  3: Decrypt the file using bobs key (bob decrypts Alice's message)
 
-3: Decrypt the file using bobs key (bob decrypts Alice's message)
-
-$ python2 ECIES.py decrypt fileToDecrypt.txt  decryptedResult.txt ownKeys.json
-
-
-
-
-
+         $ python2 ECIES.py decrypt fileToDecrypt.txt  decryptedResult.txt ownKeys.json
