@@ -3,9 +3,9 @@
   ECIES
 
   Eliptic curve encryption and decryption tool
-
-    
-    Douglas Mejia
+  Encrypts a text file to a specific public key 
+  Decrypts a specific file a peer public key
+  author: Douglas Mejia
 """
 from curves import SECP_256k1
 from curves import SmallWeierstrassCurveFp
@@ -14,15 +14,12 @@ from ecc import int_to_string
 from curves import BrainPoolP256r1
 from ellipticcurve import EllipticCurveFp
 from numbertheory import square_root_mod_prime
-from ecc_toy import b58encode
-from encoding import b85encode,b85decode,base_N_encode,base_N_decode
 import hashlib
 import hmac
 import aes_siv
 import os
 import pwd
 import click
-import cPickle as pickle
 import json
 
 # def encrypt(file):
@@ -36,7 +33,7 @@ def generate_ephem_key_pair(file):
   '''
   Uses the SECP_256k1 curve size to gerenate an Ephermal private key 
   Ephemeral public key is a point on the curve. 
-  Saves the generated keys to a file.
+  Saves the generated as elements in a JSON file.
   '''
   curve = SECP_256k1()
   G = curve.generator()
@@ -58,55 +55,54 @@ def generate_ephem_key_pair(file):
 
 def encrypt_data(data,peerKey,ownKey):
   """
-    Argments 
-    data: Text from file.
-    key_X: the X coordinate of Bobs(i.e one recieving message) public key (which is a point)
-    key_Y: the Y coordinate of Bobs(i.e one recieving message) public key (which is a point)
+    Arguments 
+      data: Text from file.
+      peerKey: JSON file containing peer public key 
+      ownKey: json file Containing own key information
    
     general algorithm for encryption
     u = own private key 
     V = destinations public key 
-    secrete Kkey  = KeyDerivationFunction(u * V)   [in this case HMAC(SHA256( u * V).x) ]
-
+    secrete Key  = KeyDerivationFunction(u * V)   [in this case HMAC(SHA256( u * V).x) ]
 
 
     This funtion will encrypt to a specific public key. 
     encrypts a file using the AES_SIV  an a point on the  generated Elliptic curve
+
+    this function assumes public key exhange has aleady occured.
   """
   curve = SECP_256k1()
+  
+  #retrieve own and peer key records from json files 
   own_keys = json.load(ownKey)
-  # click.echo(own_keys)
   peer_keys= json.load(peerKey)
-  # click.echo(peer_keys)
+
   own_private = own_keys["Private key"]
   peer_public= curve.point(peer_keys["X"],peer_keys["Y"])   
   
- 
-  click.echo('private key  {}'.format( own_private))
-  click.echo('message x {}'.format(peer_public))
-  click.echo(' {}'.format(own_keys))
-
-  # sk = int_to_string(own_private*peer_public.x)
+  # generate secrete key
   sk =own_private*peer_public
-
-  click.echo('encrypt sk.x is:  {}'.format(sk.x))
-  click.echo('encrypt sk.y is:  {}'.format(sk.y))
-
-  # click.echo('encrypt sk is:  {}'.format(string_to_int(sk)))
-
   key = hmac.new( int_to_string(sk.x),"",hashlib.sha256)
-  # click.echo('encrypt key is   {}'.format(key.hexdigest()))
+
+  #create cipher text and add own public key to it
   cipher = aes_siv.AES_SIV(key.hexdigest())
   ad_list = ['']
   cipher_text = cipher.encrypt(data, ad_list )
   cipher_text = int_to_string(own_keys["X"])+int_to_string(own_keys["Y"])+ cipher_text
-  # click.echo(cipher_text)
   return cipher_text
 
 
 def decrypt_data(data,ownKey):
+  """
+    Arguments 
+      data: Text from file.
+      ownKey: json file Containing own key information
 
+    Extracts peer public key from text file and uses it to recreate secrete key 
+    to decrypt a file. 
 
+    this function assumes public key exhange has aleady occured.
+  """
   keys = json.load(ownKey)
   v = keys["Private key"]
   peerPublicX = data[0:32]
@@ -116,53 +112,45 @@ def decrypt_data(data,ownKey):
 
   kx = string_to_int(peerPublicX)
   ky = string_to_int(peerPublicY)
-  click.echo('v  {}'.format(v))
-  click.echo('message x {}'.format(kx))
-  click.echo('message y {}'.format(ky))
 
   curve = SECP_256k1()
   peerPublic = curve.point(kx,ky)
   sk = v * peerPublic
 
-  click.echo('decrypt sk.x is:  {}'.format(sk.x))
-  click.echo('decrypt sk.y is:  {}'.format(sk.y))
-
   key = hmac.new(int_to_string(sk.x),"",hashlib.sha256)
-  # click.echo('decrypt key is   {}'.format(key.hexdigest()))
+ 
   cipher = aes_siv.AES_SIV(key.hexdigest())
   ad_list = ['']
   cipher_text = cipher.decrypt(data_no_key,[''])
-
-  click.echo('decrypted data {}'.format(cipher_text))
   return cipher_text
 
-  
-
-import math
-__b58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-__b58base = len(__b58chars)
 
 
-# ---- Command line interface -----------------------------
 
 @click.group()
 # @click.option("--tool", help = "produces an encrypted file from given text file ")
 def cli():
   pass
-  """
-    Action:
-      encrypt: 
-            Input file file to encrypt
-            Outputfile: result
-            key: public key to encrypt to
-  """
-  
 @cli.command()
 @click.argument('input', type = click.File('rb'))
 @click.argument('output', type = click.File('wb'))
 @click.argument('peerkey', type = click.File('rb'))
 @click.argument('key', type = click.File('rb'))
 def encrypt(input,output,peerkey,key):
+  """Encrypts a text file to a public key
+  
+  parameters: 
+
+  
+    Input:file to encrypt.
+  
+    Outputfile: encrypted file. 
+   
+  
+    peerkey: A json file containing peer key information.
+  
+    key:  A json file containing own key information.
+  """
   data = input.read()
   output.write(encrypt_data(data,peerkey,key))
 
@@ -171,12 +159,29 @@ def encrypt(input,output,peerkey,key):
 @click.argument('output', type = click.File('wb'))
 @click.argument('ownkey', type = click.File('rb'))
 def decrypt(input,output,ownkey):
+  """Decrypts a text file to a public key
+    
+    parameters:
+    
+      input: file to decrypt
+    
+      output: decrypted results
+    
+      ownkey: A json file containing own key information
+  """
+
   data = input.read()
   output.write(decrypt_data(data,ownkey))
 
 @cli.command()
 @click.argument('output', type = click.File('wb'))
 def genKey(output):
+  """creates private and public keys using Eliptic Curve
+      
+      parameters:
+
+        output: where to store generated keys. must be .json 
+  """
   generate_ephem_key_pair(output)
 
 
