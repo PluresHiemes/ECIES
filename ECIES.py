@@ -75,30 +75,40 @@ def encrypt_data(data,peerKey,ownKey):
   """
   curve = SECP_256k1()
   own_keys = json.load(ownKey)
+  # click.echo(own_keys)
   peer_keys= json.load(peerKey)
+  # click.echo(peer_keys)
   own_private = own_keys["Private key"]
   peer_public= curve.point(peer_keys["X"],peer_keys["Y"])   
   
  
-  sk = int_to_string(own_private*peerPublic.x)
-  key = hmac.new( sk,"",hashlib.sha256)
+  click.echo('private key  {}'.format( own_private))
+  click.echo('message x {}'.format(peer_public))
+  click.echo(' {}'.format(own_keys))
+
+  # sk = int_to_string(own_private*peer_public.x)
+  sk =own_private*peer_public
+
+  click.echo('encrypt sk.x is:  {}'.format(sk.x))
+  click.echo('encrypt sk.y is:  {}'.format(sk.y))
+
+  # click.echo('encrypt sk is:  {}'.format(string_to_int(sk)))
+
+  key = hmac.new( int_to_string(sk.x),"",hashlib.sha256)
+  # click.echo('encrypt key is   {}'.format(key.hexdigest()))
   cipher = aes_siv.AES_SIV(key.hexdigest())
   ad_list = ['']
   cipher_text = cipher.encrypt(data, ad_list )
   cipher_text = int_to_string(own_keys["X"])+int_to_string(own_keys["Y"])+ cipher_text
-  click.echo(cipher_text)
+  # click.echo(cipher_text)
   return cipher_text
 
 
 def decrypt_data(data,ownKey):
 
-  click.echo(data)
-  click.echo()
-  click.echo()
-  click.echo()
 
   keys = json.load(ownKey)
-  private_key = keys["Private key"]
+  v = keys["Private key"]
   peerPublicX = data[0:32]
   peerPublicY = data[32:64]
 
@@ -106,17 +116,22 @@ def decrypt_data(data,ownKey):
 
   kx = string_to_int(peerPublicX)
   ky = string_to_int(peerPublicY)
-  click.echo('private key  {}'.format(private_key))
+  click.echo('v  {}'.format(v))
   click.echo('message x {}'.format(kx))
   click.echo('message y {}'.format(ky))
 
   curve = SECP_256k1()
   peerPublic = curve.point(kx,ky)
-  sk = int_to_string(private_key*peerPublic.x)
-  key = hmac.new(sk,"",hashlib.sha256)
+  sk = v * peerPublic
+
+  click.echo('decrypt sk.x is:  {}'.format(sk.x))
+  click.echo('decrypt sk.y is:  {}'.format(sk.y))
+
+  key = hmac.new(int_to_string(sk.x),"",hashlib.sha256)
+  # click.echo('decrypt key is   {}'.format(key.hexdigest()))
   cipher = aes_siv.AES_SIV(key.hexdigest())
   ad_list = ['']
-  cipher_text = cipher.decrypt(data_no_key,ad_list )
+  cipher_text = cipher.decrypt(data_no_key,[''])
 
   click.echo('decrypted data {}'.format(cipher_text))
   return cipher_text
