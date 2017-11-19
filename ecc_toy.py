@@ -27,25 +27,31 @@ def ecc_toy():
     public_key = private_key * curve.generator()
     print public_key.x
 
+
+
 def ecc_toy2():
     curve = SECP_256k1()
     G = curve.generator()
     private = string_to_int( os.urandom(curve.coord_size) )
+
+
+
     public = private * G
     priv_b58 = b58encode( int_to_string(private) )
+
     pub_b58 = b58encode( int_to_string(public.x) )
     
     click.echo( 'private key: {}'.format(priv_b58) )
-    priv_qr_string = 'bc:' + priv_b58
-    qr = pyqrcode.create( priv_qr_string )
-    text_qr = qr.terminal()
-    click.echo(text_qr)
+    # priv_qr_string = 'bc:' + priv_b58
+    # qr = pyqrcode.create( priv_qr_string )
+    # text_qr = qr.terminal()
+    # click.echo(text_qr)
     
-    click.echo( 'public key: {}'.format(pub_b58) )
-    pub_qr_string = 'bc:' + pub_b58
-    qr = pyqrcode.create( pub_qr_string )
-    text_qr = qr.terminal()
-    click.echo(text_qr)
+    # click.echo( 'public key: {}'.format(pub_b58) )
+    # pub_qr_string = 'bc:' + pub_b58
+    # qr = pyqrcode.create( pub_qr_string )
+    # text_qr = qr.terminal()
+    # click.echo(text_qr)
 
 
 

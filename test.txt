@@ -1,7 +1,7 @@
-hello
-this is a test
-one which is supposed to read 
-all the contents of this file and 
-output them in the command line. also, 
-i have come to the conclusion that i hate 
-python.
+This bitcoind address validator is a subclass of the Django forms.CharField class, but could easily be adapted to other frameworks or to be standalone code.
+
+It does a "deep" validation, checking that the checksum built into every bitcoin address matches the address. It needs the PyCrypto library for the SHA256 function.
+
+I hereby release this code into the public domain, do with it what you will.  And please let me know if you find any bugs in it.
+
+BCAddressField.py:
