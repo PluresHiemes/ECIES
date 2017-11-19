@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 """ 
   ECIES
-
   Eliptic curve encryption and decryption tool
   Encrypts a text file to a specific public key 
   Decrypts a specific file a peer public key
   author: Douglas Mejia
+  
+  following files/libraries provided by Paul Lambert:
+    curves
+    ecc
+    ellipticcurve
+    aes_siv
+    numbertheory
 """
 from curves import SECP_256k1
 from curves import SmallWeierstrassCurveFp
@@ -21,13 +27,6 @@ import os
 import pwd
 import click
 import json
-
-# def encrypt(file):
-
-# def decrypt(file):
-curve = 0
-ephem_u= 0
-ephem_U =0
 
 def generate_ephem_key_pair(file):
   '''
@@ -169,7 +168,6 @@ def decrypt(input,output,ownkey):
     
       ownkey: A json file containing own key information
   """
-
   data = input.read()
   output.write(decrypt_data(data,ownkey))
 
@@ -183,7 +181,6 @@ def genKey(output):
         output: where to store generated keys. must be .json 
   """
   generate_ephem_key_pair(output)
-
 
 if __name__ == '__main__':
     cli()
